@@ -148,9 +148,9 @@ def main():
 if __name__ == "__main__":
     main()
 
-book1 = Book("How to Code", "Victor", "123456789", 5)
-patron1 = Patron("Ken Arty", "P001", "Ken@example.com")
-transaction1 = Transaction(book1, patron1, "2022-12-31")
+book1 = Book("Python Programming", "Karol", "987654321", 1)
+patron1 = Patron("Bob Clemsin", "A001", "Bobclemsin@gmail.com")
+transaction1 = Transaction(book1, patron1, "2022-3-3")
 
 # Checking out a book
 transaction1.check_out()  # Output: Book 'Python Programming' checked out to Alice Johnson
