@@ -1,0 +1,165 @@
+import json
+
+
+class Book:
+    def __init__(self, title, author, isbn, quantity):
+        self.title = title
+        self.author = author
+        self.isbn = isbn
+        self.quantity = quantity
+
+    def display_details(self):
+        print(f"Title: {self.title}\nAuthor: {self.author}\nISBN: {self.isbn}\nQuantity: {self.quantity}")
+
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "author": self.author,
+            "isbn": self.isbn,
+            "quantity": self.quantity
+        }
+
+
+class Patron:
+    def __init__(self, name, patron_id, contact_info):
+        self.name = name
+        self.patron_id = patron_id
+        self.contact_info = contact_info
+
+    def display_details(self):
+        print(f"Name: {self.name}\nID: {self.patron_id}\nContact Info: {self.contact_info}")
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "id": self.patron_id,
+            "contact_info": self.contact_info
+        }
+
+
+class Transaction:
+    def __init__(self, book, patron, due_date):
+        self.book = book
+        self.patron = patron
+        self.due_date = due_date
+        self.checked_out = False
+
+    def check_out(self):
+        if self.book.quantity > 0 and not self.checked_out:
+            self.checked_out = True
+            self.book.quantity -= 1
+            print(f"Book '{self.book.title}' checked out to {self.patron.name}")
+        else:
+            print("Book not available for checkout or already checked out")
+
+    def check_in(self):
+        if self.checked_out:
+            self.checked_out = False
+            self.book.quantity += 1
+            print(f"Book '{self.book.title}' checked in")
+        else:
+            print("Book is not checked out")
+
+
+class Library:
+    def __init__(self):
+        self.books = []  # List to store books
+        self.patrons = []  # List to store patrons
+        self.transactions = []  # List to store transactions
+
+    def add_book(self, book):
+        self.books.append(book)
+
+    def remove_book(self, book):
+        self.books.remove(book)
+
+    def add_patron(self, patron):
+        self.patrons.append(patron)
+
+    def remove_patron(self, patron):
+        self.patrons.remove(patron)
+
+    def search_books(self, query):
+        return [book for book in self.books if query in [book.title, book.author, book.isbn]]
+
+    def handle_transaction(self, transaction):
+        self.transactions.append(transaction)
+
+    def generate_reports(self):
+        total_books = len(self.books)
+        total_patrons = len(self.patrons)
+        total_transactions = len(self.transactions)
+
+        print("Library Reports:")
+        print(f"Total Books in Library: {total_books}")
+        print(f"Total Patrons registered: {total_patrons}")
+        print(f"Total Transactions conducted: {total_transactions}")
+
+
+class LibraryCLI:
+    def __init__(self, library):
+        self.library = library
+
+    def display_menu(self):
+        print("Library Management System Menu:")
+        print("1. Add a book")
+        print("2. Remove a book")
+        print("3. Exit")
+
+    def run(self):
+        while True:
+            self.display_menu()
+            choice = input("Enter your choice: ")
+            if choice == '1':
+                self.add_book()
+            elif choice == '2':
+                self.remove_book()
+            elif choice == '3':
+                break
+            else:
+                print("Invalid choice, please try again.")
+
+    def add_book(self):
+        title = input("Enter the title of the book: ")
+        author = input("Enter the author of the book: ")
+        isbn = input("Enter the ISBN of the book: ")
+        quantity = int(input("Enter the quantity of the book: "))
+
+        new_book = Book(title, author, isbn, quantity)
+        self.library.add_book(new_book)
+        print("Book added successfully.")
+
+    def remove_book(self):
+        title = input("Enter the title of the book to remove: ")
+        for book in self.library.books:
+            if book.title == title:
+                self.library.remove_book(book)
+                print("Book removed successfully.")
+                return
+        print("Book not found.")
+
+
+def main():
+    library = Library()
+    library_cli = LibraryCLI(library)
+    library_cli.run()
+
+
+if __name__ == "__main__":
+    main()
+
+book1 = Book("How to Code", "Victor", "123456789", 5)
+patron1 = Patron("Ken Arty", "P001", "Ken@example.com")
+transaction1 = Transaction(book1, patron1, "2022-12-31")
+
+# Checking out a book
+transaction1.check_out()  # Output: Book 'Python Programming' checked out to Alice Johnson
+
+# Attempting to check out the same book again
+transaction1.check_out()  # Output: Book not available for checkout or already checked out
+
+# Checking in the book
+transaction1.check_in()  # Output: Book 'Python Programming' checked in
+
+# Attempting to check in the book again
+transaction1.check_in()  # Output: Book is not checked out
