@@ -21,14 +21,16 @@ class Patron:
         return f"Name: {self.name}, ID: {self.ID}, Contact: {self.contact}"
 
 class Transaction:
-    def __init__(self, book, patron, due_date):
+    def __init__(self, book, patron):
         self.book = book
         self.patron = patron
-        self.due_date = due_date
+        self.due_date = datetime.date.today() + datetime.timedelta(days=14)
         self.fine = 0
 
     def check_in(self):
         self.book.quantity += 1
+        if datetime.date.today() > self.due_date:
+            self.fine = (datetime.date.today() - self.due_date).days * 1  # $1 per day late
 
     def check_out(self):
         if self.book.quantity > 0:
@@ -128,8 +130,7 @@ def main():
             book = next((book for book in library.books if book.title == title), None)
             ID = input("Enter patron ID: ")
             patron = next((patron for patron in library.patrons if patron.ID == ID), None)
-            due_date = datetime.date.today() + datetime.timedelta(days=14)
-            transaction = Transaction(book, patron, due_date)
+            transaction = Transaction(book, patron)
             library.manage_transaction(transaction)
         elif choice == '7':
             library.save_data()
