@@ -1,71 +1,46 @@
 import json
-
+import datetime
 
 class Book:
-    def __init__(self, title, author, isbn, quantity):
+    def __init__(self, title, author, ISBN, quantity):
         self.title = title
         self.author = author
-        self.isbn = isbn
+        self.ISBN = ISBN
         self.quantity = quantity
 
-    def display_details(self):
-        print(f"Title: {self.title}\nAuthor: {self.author}\nISBN: {self.isbn}\nQuantity: {self.quantity}")
-
-    def to_dict(self):
-        return {
-            "title": self.title,
-            "author": self.author,
-            "isbn": self.isbn,
-            "quantity": self.quantity
-        }
-
+    def display(self):
+        return f"Title: {self.title}, Author: {self.author}, ISBN: {self.ISBN}, Quantity: {self.quantity}"
 
 class Patron:
-    def __init__(self, name, patron_id, contact_info):
+    def __init__(self, name, ID, contact):
         self.name = name
-        self.patron_id = patron_id
-        self.contact_info = contact_info
+        self.ID = ID
+        self.contact = contact
 
-    def display_details(self):
-        print(f"Name: {self.name}\nID: {self.patron_id}\nContact Info: {self.contact_info}")
-
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "id": self.patron_id,
-            "contact_info": self.contact_info
-        }
-
+    def display(self):
+        return f"Name: {self.name}, ID: {self.ID}, Contact: {self.contact}"
 
 class Transaction:
     def __init__(self, book, patron, due_date):
         self.book = book
         self.patron = patron
         self.due_date = due_date
-        self.checked_out = False
-
-    def check_out(self):
-        if self.book.quantity > 0 and not self.checked_out:
-            self.checked_out = True
-            self.book.quantity -= 1
-            print(f"Book '{self.book.title}' checked out to {self.patron.name}")
-        else:
-            print("Book not available for checkout or already checked out")
+        self.fine = 0
 
     def check_in(self):
-        if self.checked_out:
-            self.checked_out = False
-            self.book.quantity += 1
-            print(f"Book '{self.book.title}' checked in")
-        else:
-            print("Book is not checked out")
+        self.book.quantity += 1
 
+    def check_out(self):
+        if self.book.quantity > 0:
+            self.book.quantity -= 1
+        else:
+            print("Book is not available")
 
 class Library:
     def __init__(self):
-        self.books = []  # List to store books
-        self.patrons = []  # List to store patrons
-        self.transactions = []  # List to store transactions
+        self.books = []
+        self.patrons = []
+        self.transactions = []
 
     def add_book(self, book):
         self.books.append(book)
@@ -79,87 +54,86 @@ class Library:
     def remove_patron(self, patron):
         self.patrons.remove(patron)
 
-    def search_books(self, query):
-        return [book for book in self.books if query in [book.title, book.author, book.isbn]]
+    def search_book(self, title):
+        for book in self.books:
+            if book.title == title:
+                return book.display()
 
-    def handle_transaction(self, transaction):
+    def manage_transaction(self, transaction):
         self.transactions.append(transaction)
 
-    def generate_reports(self):
-        total_books = len(self.books)
-        total_patrons = len(self.patrons)
-        total_transactions = len(self.transactions)
+    def save_data(self):
+        with open('library.json', 'w') as f:
+            json.dump({
+                'books': [book.__dict__ for book in self.books],
+                'patrons': [patron.__dict__ for patron in self.patrons]
+            }, f)
 
-        print("Library Reports:")
-        print(f"Total Books in Library: {total_books}")
-        print(f"Total Patrons registered: {total_patrons}")
-        print(f"Total Transactions conducted: {total_transactions}")
-
-
-class LibraryCLI:
-    def __init__(self, library):
-        self.library = library
-
-    def display_menu(self):
-        print("Library Management System Menu:")
-        print("1. Add a book")
-        print("2. Remove a book")
-        print("3. Exit")
-
-    def run(self):
-        while True:
-            self.display_menu()
-            choice = input("Enter your choice: ")
-            if choice == '1':
-                self.add_book()
-            elif choice == '2':
-                self.remove_book()
-            elif choice == '3':
-                break
-            else:
-                print("Invalid choice, please try again.")
-
-    def add_book(self):
-        title = input("Enter the title of the book: ")
-        author = input("Enter the author of the book: ")
-        isbn = input("Enter the ISBN of the book: ")
-        quantity = int(input("Enter the quantity of the book: "))
-
-        new_book = Book(title, author, isbn, quantity)
-        self.library.add_book(new_book)
-        print("Book added successfully.")
-
-    def remove_book(self):
-        title = input("Enter the title of the book to remove: ")
-        for book in self.library.books:
-            if book.title == title:
-                self.library.remove_book(book)
-                print("Book removed successfully.")
-                return
-        print("Book not found.")
-
+    def load_data(self):
+        try:
+            with open('library.json', 'r') as f:
+                data = json.load(f)
+                self.books = [Book(**book) for book in data['books']]
+                self.patrons = [Patron(**patron) for patron in data['patrons']]
+        except FileNotFoundError:
+            pass
 
 def main():
     library = Library()
-    library_cli = LibraryCLI(library)
-    library_cli.run()
+    library.load_data()
 
+    while True:
+        print("1. Add book")
+        print("2. Remove book")
+        print("3. Add patron")
+        print("4. Remove patron")
+        print("5. Search book")
+        print("6. Manage transaction")
+        print("7. Save and exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            title = input("Enter book title: ")
+            author = input("Enter book author: ")
+            ISBN = input("Enter book ISBN: ")
+            quantity = int(input("Enter book quantity: "))
+            book = Book(title, author, ISBN, quantity)
+            library.add_book(book)
+        elif choice == '2':
+            title = input("Enter book title: ")
+            book = next((book for book in library.books if book.title == title), None)
+            if book is not None:
+                library.remove_book(book)
+            else:
+                print("Book not found")
+        elif choice == '3':
+            name = input("Enter patron name: ")
+            ID = input("Enter patron ID: ")
+            contact = input("Enter patron contact: ")
+            patron = Patron(name, ID, contact)
+            library.add_patron(patron)
+        elif choice == '4':
+            ID = input("Enter patron ID: ")
+            patron = next((patron for patron in library.patrons if patron.ID == ID), None)
+            if patron is not None:
+                library.remove_patron(patron)
+            else:
+                print("Patron not found")
+        elif choice == '5':
+            title = input("Enter book title: ")
+            print(library.search_book(title))
+        elif choice == '6':
+            title = input("Enter book title: ")
+            book = next((book for book in library.books if book.title == title), None)
+            ID = input("Enter patron ID: ")
+            patron = next((patron for patron in library.patrons if patron.ID == ID), None)
+            due_date = datetime.date.today() + datetime.timedelta(days=14)
+            transaction = Transaction(book, patron, due_date)
+            library.manage_transaction(transaction)
+        elif choice == '7':
+            library.save_data()
+            break
 
 if __name__ == "__main__":
     main()
-
-book1 = Book("Python Programming", "Karol", "987654321", 1)
-patron1 = Patron("Bob Clemsin", "A001", "Bobclemsin@gmail.com")
-transaction1 = Transaction(book1, patron1, "2022-3-3")
-
-# Checking out a book
-transaction1.check_out()  # Output: Book 'Python Programming' checked out to Alice Johnson
-
-# Attempting to check out the same book again
-transaction1.check_out()  # Output: Book not available for checkout or already checked out
-
-# Checking in the book
-transaction1.check_in()  # Output: Book 'Python Programming' checked in
-
-# Attempting to check in the book again
-transaction1.check_in()  # Output: Book is not checked out
